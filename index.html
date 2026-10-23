@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
-<main class="card">
+<main class="card hidden">
   <img class="logo brand-logo" src="logo.png" alt="Skyware Hospitality Solutions, powered by 1Step">
 
   <section id="formView">
@@ -35,18 +35,19 @@
   </section>
 
   <div class="foot"><span id="footContact">877-759-9329 &middot; sales@skywaresystems.com &middot; skywaresystems.com</span>
-    <button id="staffLink" class="staff-link" type="button">Staff</button>
+    <button id="staffLink" class="staff-link" type="button">Staff: view leads</button>
   </div>
 </main>
 
 <main id="loginView" class="card login hidden">
   <img class="logo brand-logo" src="logo.png" alt="Skyware">
-  <h1>Staff sign in</h1>
+  <h1 id="loginTitle">Staff sign in</h1>
   <div class="rule"></div>
+  <p class="sub" id="loginSub">Sign in to set up the booth.</p>
   <form id="loginForm" novalidate autocomplete="off">
     <div class="field">
       <label for="loginUser">Username</label>
-      <input id="loginUser" type="text" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <input id="loginUser" type="email" inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="you@1steptech.com">
     </div>
     <div class="field">
       <label for="loginPass">Password</label>
@@ -54,33 +55,43 @@
       <div class="err" id="loginErr" aria-live="polite"></div>
     </div>
     <button class="btn secondary" type="submit">Sign in</button>
-    <button class="link-btn" id="loginCancel" type="button">Back to form</button>
+    <button class="link-btn hidden" id="loginCancel" type="button">Back to form</button>
   </form>
+</main>
+
+<main id="setupView" class="card setup hidden">
+  <img class="logo brand-logo" src="logo.png" alt="Skyware">
+  <h1>Set up this show</h1>
+  <div class="rule"></div>
+  <p class="sub">Signed in as <strong id="setupWho"></strong> &middot; <button class="inline-link" id="setupSignOut" type="button">Sign out</button></p>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">1</span> Choose the logo</div>
+    <div class="brand-tiles" id="brandTiles"></div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">2</span> Event name</div>
+    <input id="eventInput" type="text" autocapitalize="words" placeholder="e.g. OHI 2026">
+    <div class="chips" id="recentEvents"></div>
+    <div class="err" id="setupErr" aria-live="polite"></div>
+  </div>
+
+  <button class="btn" id="startBtn" type="button">Start collecting leads</button>
 </main>
 
 <section id="staffView" class="staff hidden">
   <div class="admin-top">
     <img class="brand-logo" src="logo.png" alt="Skyware">
     <div><div class="big-count" id="count">0</div><div class="muted">leads on this device</div></div>
-    <div class="signed-in"><span class="muted">Signed in as</span> <strong id="whoAmI"></strong></div>
-    <button class="btn secondary small" id="backBtn" type="button">Sign out &amp; back to form</button>
+    <div class="signed-in"><div><span class="muted">Event</span> <strong id="eventNow"></strong></div><div><span class="muted">Signed in as</span> <strong id="whoAmI"></strong></div></div>
   </div>
 
-  <div class="setup-grid">
-    <div class="panel event-panel">
-      <div class="panel-kicker">Event</div>
-      <div class="event-current" id="eventCurrent"></div>
-      <div class="muted">Every new lead is tagged with this name.</div>
-      <div class="row event-edit">
-        <input id="eventInput" type="text" autocapitalize="words" placeholder="e.g. OHI 2026">
-        <button class="btn small" id="saveEvent" type="button">Save</button>
-      </div>
-      <div class="chips" id="recentEvents"></div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-kicker">Brand for this show</div>
-      <div class="brand-tiles" id="brandTiles"></div>
+  <div class="panel">
+    <div class="row">
+      <button class="btn small" id="backBtn" type="button">Back to form</button>
+      <button class="btn secondary small" id="changeSetupBtn" type="button">Change logo or event</button>
+      <button class="link-btn inline" id="signOutBtn" type="button">Sign out</button>
     </div>
   </div>
 
