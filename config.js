@@ -6,7 +6,7 @@ window.SKY_CONFIG = {
   // Google Sheet: leads are sent here automatically whenever the iPad is online.
   // sheetUrl = the Apps Script web app address (ends in /exec); leave "" to turn syncing off.
   // sheetSecret must match SECRET in google-sheet-script.gs. sheetViewUrl = the sheet's own link (for the "Open sheet" button).
-  sheetUrl: "",
+  sheetUrl: "https://script.google.com/macros/s/AKfycbwQtW14kUM_Z2l_DeBKbp4pLlm2e9q5X4yPW6WjBetk1d67TWq-Y5C_VLZint1ItyGJ9g/exec",
   sheetSecret: "gYcYznlIRiUP5Wk0qaZhKi6T",
   sheetViewUrl: "",
 
