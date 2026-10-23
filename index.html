@@ -108,6 +108,19 @@
   </div>
 </section>
 
+<div id="noteDialog" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="noteTitle">
+  <div class="modal-card">
+    <h2 id="noteTitle"></h2>
+    <p class="muted" id="noteMeta"></p>
+    <label for="noteText">Notes</label>
+    <textarea id="noteText" rows="6" placeholder="e.g. Wants a demo in January. 120 sites, using Campspot today."></textarea>
+    <div class="row modal-actions">
+      <button class="btn small" id="noteSave" type="button">Save note</button>
+      <button class="btn secondary small" id="noteCancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script src="config.js"></script>
 <script src="xlsx.js"></script>
 <script src="app.js"></script>

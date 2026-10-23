@@ -234,9 +234,14 @@ function renderStaff() {
   $('count').textContent = leads.length;
   $('whoAmI').textContent = signedIn || '';
   $('eventNow').textContent = eventName();
-  $('thead').innerHTML = `<tr>${HEADERS.map(h => `<th>${esc(h)}</th>`).join('')}</tr>`;
-  $('rows').innerHTML = [...leads].reverse().map(l =>
-    `<tr class="${l['Possible Duplicate'] ? 'dup' : ''}">${HEADERS.map(h => `<td>${esc(l[h])}</td>`).join('')}</tr>`).join('');
+  // On screen, Notes, Name and Property come first so they're easy to reach; the Excel column order is unchanged.
+  const first = ['Name', 'Property Name'];
+  const shown = [...first, ...HEADERS.filter(h => h !== 'Notes' && !first.includes(h))];
+  $('thead').innerHTML = `<tr><th>Notes</th>${shown.map(h => `<th>${esc(h)}</th>`).join('')}</tr>`;
+  $('rows').innerHTML = [...leads].reverse().map(l => `<tr class="${l['Possible Duplicate'] ? 'dup' : ''}">
+    <td class="note-cell"><button type="button" class="note-btn${l.Notes ? ' has-note' : ''}" data-note="${esc(l['Lead ID'])}">${l.Notes ? 'Edit note' : '+ Add note'}</button>${l.Notes ? `<div class="note-snippet">${esc(l.Notes)}</div>` : ''}</td>
+    ${shown.map(h => `<td>${esc(l[h])}</td>`).join('')}</tr>`).join('');
+  $('rows').querySelectorAll('[data-note]').forEach(b => b.onclick = () => openNote(b.dataset.note));
   const last = JSON.parse(lsGet(EXPORT_KEY) || 'null');
   const notExported = last ? leads.length - last.count : leads.length;
   $('exportInfo').textContent = last
@@ -244,6 +249,28 @@ function renderStaff() {
     : (leads.length ? 'Not exported yet. Export at the end of each day.' : '');
 }
 $('backBtn').onclick = () => { showOnly(formCard); resetForm(); };
+
+// Notes on a lead (saved on the device and exported in the Notes column)
+let noteFor = null;
+function openNote(id) {
+  const l = leads.find(x => x['Lead ID'] === id); if (!l) return;
+  noteFor = id;
+  $('noteTitle').textContent = l.Name || 'Lead';
+  $('noteMeta').textContent = [l['Property Name'], l['Phone Number'], l.Email].filter(Boolean).join(' · ');
+  $('noteText').value = l.Notes || '';
+  $('noteDialog').classList.remove('hidden');
+  $('noteText').focus();
+}
+function closeNote() { noteFor = null; $('noteDialog').classList.add('hidden'); document.activeElement.blur(); }
+$('noteCancel').onclick = closeNote;
+$('noteDialog').addEventListener('click', e => { if (e.target === $('noteDialog')) closeNote(); });
+$('noteSave').onclick = async () => {
+  const text = $('noteText').value.trim(), id = noteFor;
+  await loadLeads();   // pick up anything saved since the list was drawn
+  const l = leads.find(x => x['Lead ID'] === id);
+  if (l) { l.Notes = text; await saveLeads(); }
+  closeNote(); renderStaff();
+};
 $('changeSetupBtn').onclick = showSetup;
 $('signOutBtn').onclick = signOut;
 
