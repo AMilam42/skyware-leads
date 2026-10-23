@@ -1,0 +1,20 @@
+/* Skyware brand values. Swap here to restyle everything. */
+:root {
+  --sky-blue: #175B86;
+  --web-blue: #166FA7;
+  --web-blue-dark: #1B4F79;
+  --navy: #0F3A57;
+  --orange: #D2832B;        /* on-screen CTA orange; print master is #E8842C */
+  --ink: #2F2F2F;
+  --slate: #4A5D70;
+  --mist: #F3F5F9;
+  --line: #D6DCE6;
+  --paper: #FFFFFF;
+  --error: #B42318;
+  --gradient: linear-gradient(135deg, #175B86 0%, #266697 45%, #567CA9 100%);
+  /* Raleway/Roboto load from Google when online; offline they fall back cleanly. */
+  --font-display: "Raleway", "Montserrat", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Roboto", "Helvetica Neue", Arial, sans-serif;
+  --radius-pill: 40px;
+  --radius-card: 8px;
+}

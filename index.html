@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Skyware Leads">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#175B86">
+<title>Skyware Leads</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="brand.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<main class="card">
+  <img class="logo" src="logo.png" alt="Skyware Hospitality Solutions, powered by 1Step">
+
+  <section id="formView">
+    <h1>Let's talk about your property</h1>
+    <div class="rule"></div>
+    <p class="sub">Leave your details and our team will follow up after the show.</p>
+    <form id="leadForm" novalidate autocomplete="off"></form>
+  </section>
+
+  <section id="thanksView" class="thanks hidden">
+    <div class="check">&#10003;</div>
+    <h1>Thank you!</h1>
+    <div class="rule"></div>
+    <p class="sub">A Skyware team member will be in touch soon.<br>Enjoy the rest of the show.</p>
+    <p class="count">Starting over in <span id="secs"></span>s</p>
+    <button class="btn secondary" id="againBtn" type="button">Start over now</button>
+  </section>
+
+  <div class="foot">877-759-9329 &middot; sales@skywaresystems.com &middot; skywaresystems.com
+    <button id="staffLink" class="staff-link" type="button">Staff</button>
+  </div>
+</main>
+
+<section id="staffView" class="staff hidden">
+  <div class="admin-top">
+    <img src="logo.png" alt="Skyware">
+    <div><div class="big-count" id="count">0</div><div class="muted">leads on this device</div></div>
+    <button class="btn secondary small" id="backBtn" type="button">Back to form</button>
+  </div>
+
+  <div class="panel">
+    <label for="eventInput">Event name</label>
+    <div class="row">
+      <input id="eventInput" type="text" autocapitalize="words">
+      <button class="btn secondary small" id="saveEvent" type="button">Save event name</button>
+    </div>
+    <p class="muted" id="eventSaved"></p>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <button class="btn small" id="exportBtn" type="button">Export Excel</button>
+      <button class="btn danger small" id="clearBtn" type="button">Clear leads from this device</button>
+    </div>
+    <p class="muted" id="exportInfo"></p>
+  </div>
+
+  <div class="table-wrap">
+    <table><thead id="thead"></thead><tbody id="rows"></tbody></table>
+  </div>
+</section>
+
+<script src="config.js"></script>
+<script src="xlsx.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
