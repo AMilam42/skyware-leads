@@ -1,5 +1,5 @@
 // Caches the app so it opens with no internet. Bump VERSION after changing any file.
-const VERSION = 'skyware-leads-v11';
+const VERSION = 'skyware-leads-v12';
 const FILES = ['./', 'index.html', 'app.js', 'config.js', 'xlsx.js', 'brand.css', 'app.css',
   'logo.png', 'logo-rv.png', 'icon-180.png', 'icon-512.png', 'manifest.webmanifest'];
 
