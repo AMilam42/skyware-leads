@@ -7,6 +7,7 @@ window.SKY_CONFIG = {
   // To add or change one, run:  node make-login.js <username> <password>  and paste the line it prints here.
   staffLogins: [
     { username: "cory@1steptech.com", passwordHash: "e61620aa56e0dfb6f877500b0ed871eb7f5707afe82e5d49487d6cd8b6fe16dc" },
+    { username: "alison@1steptech.com", passwordHash: "3ea1fea1a9a19fe519632fd48b41af76d580eade71e56ea38dec263342c17e9c" },
   ],
 
   // Brands staff can pick on the Staff screen. Each iPad remembers its choice.
