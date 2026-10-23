@@ -41,6 +41,17 @@ async function saveLeads() {
   return ok;
 }
 const eventName = () => lsGet(EVENT_KEY) || CFG.defaultEvent;
+const BRAND_KEY = 'skyware_brand';
+function applyBrand() {
+  const key = CFG.brands[lsGet(BRAND_KEY)] ? lsGet(BRAND_KEY) : 'hotel';
+  const b = CFG.brands[key];
+  document.documentElement.dataset.brand = key;
+  document.querySelectorAll('.brand-logo').forEach(img => { img.src = b.logo; img.alt = b.alt; });
+  $('headline').textContent = b.headline;
+  $('footContact').innerHTML = b.footer;
+  const prop = $('property_name'); if (prop) prop.placeholder = b.propertyPlaceholder;
+  document.querySelectorAll('[data-brand-pick]').forEach(btn => btn.classList.toggle('active', btn.dataset.brandPick === key));
+}
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
 
 // ---------- Form ----------
@@ -159,6 +170,7 @@ $('backBtn').onclick = () => {
   document.body.classList.remove('admin');
   resetForm();
 };
+document.querySelectorAll('[data-brand-pick]').forEach(btn => btn.onclick = () => { lsSet(BRAND_KEY, btn.dataset.brandPick); applyBrand(); });
 $('saveEvent').onclick = () => {
   const v = $('eventInput').value.trim();
   if (!v) return;
@@ -205,5 +217,6 @@ $('clearBtn').onclick = async () => {
 };
 
 // ---------- Offline support ----------
+applyBrand();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 loadLeads();

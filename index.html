@@ -16,10 +16,10 @@
 </head>
 <body>
 <main class="card">
-  <img class="logo" src="logo.png" alt="Skyware Hospitality Solutions, powered by 1Step">
+  <img class="logo brand-logo" src="logo.png" alt="Skyware Hospitality Solutions, powered by 1Step">
 
   <section id="formView">
-    <h1>Let's talk about your property</h1>
+    <h1 id="headline">Let's talk about your property</h1>
     <div class="rule"></div>
     <p class="sub">Leave your details and our team will follow up after the show.</p>
     <form id="leadForm" novalidate autocomplete="off"></form>
@@ -34,14 +34,14 @@
     <button class="btn secondary" id="againBtn" type="button">Start over now</button>
   </section>
 
-  <div class="foot">877-759-9329 &middot; sales@skywaresystems.com &middot; skywaresystems.com
+  <div class="foot"><span id="footContact">877-759-9329 &middot; sales@skywaresystems.com &middot; skywaresystems.com</span>
     <button id="staffLink" class="staff-link" type="button">Staff</button>
   </div>
 </main>
 
 <section id="staffView" class="staff hidden">
   <div class="admin-top">
-    <img src="logo.png" alt="Skyware">
+    <img class="brand-logo" src="logo.png" alt="Skyware">
     <div><div class="big-count" id="count">0</div><div class="muted">leads on this device</div></div>
     <button class="btn secondary small" id="backBtn" type="button">Back to form</button>
   </div>
@@ -53,6 +53,14 @@
       <button class="btn secondary small" id="saveEvent" type="button">Save event name</button>
     </div>
     <p class="muted" id="eventSaved"></p>
+  </div>
+
+  <div class="panel">
+    <label>Brand for this show</label>
+    <div class="row brand-pick">
+      <button class="btn secondary small" type="button" data-brand-pick="hotel">Hospitality (hotels)</button>
+      <button class="btn secondary small" type="button" data-brand-pick="rv">RV Solutions (parks)</button>
+    </div>
   </div>
 
   <div class="panel">

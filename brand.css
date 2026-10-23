@@ -18,3 +18,13 @@
   --radius-pill: 40px;
   --radius-card: 8px;
 }
+
+/* Skyware RV Solutions (picked on the Staff screen). Values from the RV brand kit. */
+:root[data-brand="rv"] {
+  --sky-blue: #166FA7;
+  --web-blue: #166FA7;
+  --web-blue-dark: #1B4F79;
+  --navy: #1B4F79;
+  --orange: #D2832B;
+  --gradient: linear-gradient(135deg, #1B4F79 0%, #166FA7 55%, #458CB9 100%);
+}

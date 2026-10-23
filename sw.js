@@ -1,7 +1,7 @@
 // Caches the app so it opens with no internet. Bump VERSION after changing any file.
-const VERSION = 'skyware-leads-v2';
+const VERSION = 'skyware-leads-v3';
 const FILES = ['./', 'index.html', 'app.js', 'config.js', 'xlsx.js', 'brand.css', 'app.css',
-  'logo.png', 'icon-180.png', 'icon-512.png', 'manifest.webmanifest'];
+  'logo.png', 'logo-rv.png', 'icon-180.png', 'icon-512.png', 'manifest.webmanifest'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));

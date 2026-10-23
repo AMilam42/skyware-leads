@@ -69,3 +69,8 @@ body { padding-top: max(24px, env(safe-area-inset-top)); padding-bottom: max(24p
 .btn.danger { background: #fff; color: var(--error); border: 1.5px solid var(--error); }
 .muted { color: var(--slate); font-size: 15px; margin: 8px 0 0; }
 .admin-top .muted { margin: 0; }
+
+:root[data-brand="rv"] .logo { width: 260px; }
+.brand-pick .btn { background: #fff; color: var(--web-blue-dark); border: 1.5px solid var(--line); }
+.brand-pick .btn.active { background: var(--web-blue-dark); color: #fff; border-color: var(--web-blue-dark); }
+.foot span:empty + .staff-link { margin-top: 0; }

@@ -21,6 +21,7 @@ To keep visitors in the app, turn on **Guided Access** (Settings → Accessibili
 Tap the small **Staff** link at the bottom of the form (no password). From there you can:
 
 - **Event name:** type the show's name at the start of each show and tap **Save event name**. Every new lead is tagged with it, and the iPad remembers it.
+- **Brand for this show:** pick **Hospitality (hotels)** or **RV Solutions (parks)**. This switches the logo, colors and wording on that iPad. The RV look has no "Powered by 1Step" line and no contact footer until RV contact details are confirmed (edit `brands.rv.footer` in `config.js`). The home-screen icon stays the hotel logo.
 - **Export Excel:** creates `Skyware Leads - <event> - <date>.xlsx` and opens the share sheet. Choose **Save to Files** → Dropbox → `1STEP Team Folder/Sales/Conferences/<show>`, or Mail or AirDrop. The screen shows when you last exported and how many leads are new since then.
 - **Clear leads from this device:** use this only after exporting at the end of a show. You have to type CLEAR, and it warns you if anything hasn't been exported.
 
