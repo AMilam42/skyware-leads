@@ -6,7 +6,7 @@ window.SKY_CONFIG = {
   // Staff logins for the Staff screen. Passwords are stored as fingerprints, not plain text.
   // To add or change one, run:  node make-login.js <username> <password>  and paste the line it prints here.
   staffLogins: [
-    { username: "staff", passwordHash: "9e34c966e6fe0b1330d534821f8f58e9d9b9a1163341ed6d02aa505161bc296e" },   // temporary: staff / skyware. Replace before the show.
+    { username: "cory@1steptech.com", passwordHash: "e61620aa56e0dfb6f877500b0ed871eb7f5707afe82e5d49487d6cd8b6fe16dc" },
   ],
 
   // Brands staff can pick on the Staff screen. Each iPad remembers its choice.
