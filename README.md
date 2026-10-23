@@ -41,9 +41,9 @@ Each iPad has its own list, so two iPads at one show produce two files. Copy the
 
 ## Hosting
 
-**Live address: https://amilam42.github.io/skyware-leads/**
+**Live address: https://skyware-leads.vercel.app**
 
-It's hosted on GitHub Pages from the public repo `AMilam42/skyware-leads`; pushing changes to `main` updates it within a minute or two. The app contains no lead data; leads never leave the iPad except when you export them.
+It's hosted on Vercel (team *1-step*, project *skyware-leads*). To publish changes, run `vercel deploy --prod` in this folder. The code is also kept in the GitHub repo `AMilam42/skyware-leads`. The app contains no lead data; leads never leave the iPad except when you export them.
 
 ## Files
 
