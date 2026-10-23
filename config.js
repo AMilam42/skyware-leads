@@ -17,7 +17,7 @@ window.SKY_CONFIG = {
       alt: "Skyware RV Solutions",
       headline: "Let's talk about your park",
       propertyPlaceholder: "RV park or campground name",
-      footer: "",   // [CONFIRM] RV contact details; left blank until confirmed
+      footer: "877-759-9329 &middot; sales@skywaresystems.com &middot; skywaresystems.com",
     },
   },
 
