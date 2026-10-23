@@ -40,7 +40,9 @@ Each iPad has its own list, so two iPads at one show produce two files. Copy the
 
 ## Hosting
 
-Home-screen install and offline mode only work when the files are served from an **https://** address, so the folder needs to be put on a web host once. The app contains no lead data; leads never leave the iPad except when you export them.
+**Live address: https://amilam42.github.io/skyware-leads/**
+
+It's hosted on GitHub Pages from the public repo `AMilam42/skyware-leads`; pushing changes to `main` updates it within a minute or two. The app contains no lead data; leads never leave the iPad except when you export them.
 
 ## Files
 
