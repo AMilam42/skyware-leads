@@ -128,3 +128,12 @@ body { padding-top: max(24px, env(safe-area-inset-top)); padding-bottom: max(24p
 .modal-card textarea { width: 100%; font: inherit; font-size: 18px; padding: 14px 16px; border: 1.5px solid var(--line); border-radius: var(--radius-card); resize: vertical; min-height: 150px; }
 .modal-card textarea:focus { outline: none; border-color: var(--web-blue); box-shadow: 0 0 0 3px rgba(22, 111, 167, .18); }
 .modal-actions { margin-top: 16px; }
+
+/* Google Sheet sync status */
+.sync-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.sync-info { margin: 0; flex: 1 1 260px; font-size: 15px; padding-left: 22px; position: relative; color: var(--slate); }
+.sync-info::before { content: ''; position: absolute; left: 4px; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+.sync-info.ok::before { background: #2E8B57; }
+.sync-info.wait::before { background: var(--orange); }
+.sync-info.err::before { background: var(--error); }
+.sync-row .link-btn.inline { margin: 0; }

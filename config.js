@@ -3,6 +3,13 @@ window.SKY_CONFIG = {
   defaultEvent: "Trade Show 2026",   // Starting event name; staff change it per show on the Staff screen.
   resetSeconds: 8,                   // Thank-you screen time before the form clears
 
+  // Google Sheet: leads are sent here automatically whenever the iPad is online.
+  // sheetUrl = the Apps Script web app address (ends in /exec); leave "" to turn syncing off.
+  // sheetSecret must match SECRET in google-sheet-script.gs. sheetViewUrl = the sheet's own link (for the "Open sheet" button).
+  sheetUrl: "",
+  sheetSecret: "gYcYznlIRiUP5Wk0qaZhKi6T",
+  sheetViewUrl: "",
+
   // Staff logins for the Staff screen. Passwords are stored as fingerprints, not plain text.
   // To add or change one, run:  node make-login.js <username> <password>  and paste the line it prints here.
   staffLogins: [

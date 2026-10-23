@@ -34,6 +34,10 @@ async function loadLeads() {
   const byId = new Map([...b, ...a].map(l => [l['Lead ID'], l]));   // merge both copies
   leads = [...byId.values()].sort((x, y) => x['Submission Timestamp'].localeCompare(y['Submission Timestamp']));
 }
+// Every change to the lead list goes through this, one at a time, so a sync finishing
+// while a visitor submits can never overwrite the new lead.
+let leadsQueue = Promise.resolve();
+function withLeads(fn) { const p = leadsQueue.then(async () => { await loadLeads(); return fn(); }); leadsQueue = p.catch(() => {}); return p; }
 async function saveLeads() {
   const json = JSON.stringify(leads);
   const ok = lsSet(KEY, json);
@@ -133,11 +137,14 @@ form.addEventListener('submit', async e => {
     const i = $(f.key);
     lead[f.label] = f.type === 'phone' ? formatPhone(i.value.trim()) : i.value.trim();
   });
-  await loadLeads();   // pick up anything saved from another tab
-  lead['Possible Duplicate'] = findDupes(lead);
-  lead['Follow Up Status'] = 'New'; lead['Assigned To'] = ''; lead['Notes'] = '';
-  leads.push(lead);
-  const ok = await saveLeads();
+  const ok = await withLeads(() => {
+    lead['Possible Duplicate'] = findDupes(lead);
+    lead['Follow Up Status'] = 'New'; lead['Assigned To'] = ''; lead['Notes'] = '';
+    lead._v = 1;   // version: goes up on every edit; the sheet is up to date when _sv (synced version) matches
+    leads.push(lead);
+    return saveLeads();
+  });
+  syncSoon();
   if (!ok) alert('Warning: this device is almost out of storage. Please ask a Skyware team member to export the leads.');
   document.activeElement.blur();
   $('formView').classList.add('hidden');
@@ -232,6 +239,7 @@ $('staffLink').onclick = () => showLogin('unlock');
 async function showLeads() { await loadLeads(); renderStaff(); showOnly($('staffView')); }
 function renderStaff() {
   $('count').textContent = leads.length;
+  renderSync();
   $('whoAmI').textContent = signedIn || '';
   $('eventNow').textContent = eventName();
   // On screen, Notes, Name and Property come first so they're easy to reach; the Excel column order is unchanged.
@@ -266,10 +274,11 @@ $('noteCancel').onclick = closeNote;
 $('noteDialog').addEventListener('click', e => { if (e.target === $('noteDialog')) closeNote(); });
 $('noteSave').onclick = async () => {
   const text = $('noteText').value.trim(), id = noteFor;
-  await loadLeads();   // pick up anything saved since the list was drawn
-  const l = leads.find(x => x['Lead ID'] === id);
-  if (l) { l.Notes = text; await saveLeads(); }
-  closeNote(); renderStaff();
+  await withLeads(() => {
+    const l = leads.find(x => x['Lead ID'] === id);
+    if (l && l.Notes !== text) { l.Notes = text; l._v = (l._v || 1) + 1; return saveLeads(); }
+  });
+  closeNote(); renderStaff(); syncSoon();
 };
 $('changeSetupBtn').onclick = showSetup;
 $('signOutBtn').onclick = signOut;
@@ -304,16 +313,74 @@ $('exportBtn').onclick = async () => {
 $('clearBtn').onclick = async () => {
   await loadLeads();
   const last = JSON.parse(lsGet(EXPORT_KEY) || 'null');
-  const warn = !last || last.count < leads.length ? '\n\nSome leads have NOT been exported yet.' : '';
+  const unsynced = CFG.sheetUrl ? pendingLeads().length : leads.length;
+  const unexported = !last || last.count < leads.length;
+  const warn = unsynced && unexported
+    ? `\n\n${unsynced} lead(s) are NOT in the Google Sheet or an Excel export yet.` : '';
   const typed = prompt(`This permanently removes all ${leads.length} leads from this device.${warn}\n\nType CLEAR to confirm.`);
   if (typed !== 'CLEAR') return;
-  leads = []; await saveLeads();
+  await withLeads(() => { leads = []; return saveLeads(); });
   try { localStorage.removeItem(EXPORT_KEY); } catch {}
   renderStaff();
 };
+
+// ---------- Google Sheet sync ----------
+const SYNC_KEY = 'skyware_last_sync';
+const pendingLeads = () => leads.filter(l => (l._v || 1) !== l._sv);
+let syncing = false, syncTimer = null, lastSyncError = '';
+function syncSoon() { clearTimeout(syncTimer); syncTimer = setTimeout(syncNow, 1500); }
+async function syncNow() {
+  if (!CFG.sheetUrl || syncing) return;
+  if (!navigator.onLine) { renderSync(); return; }
+  syncing = true;
+  try {
+    for (let round = 0; round < 20; round++) {
+      await loadLeads();
+      const batch = pendingLeads().slice(0, 50);
+      if (!batch.length) break;
+      const sent = new Map(batch.map(l => [l['Lead ID'], l._v || 1]));
+      const res = await fetch(CFG.sheetUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // keeps it a "simple" request Google accepts
+        body: JSON.stringify({ secret: CFG.sheetSecret, headers: HEADERS,
+          leads: batch.map(l => Object.fromEntries(HEADERS.map(h => [h, l[h] ?? '']))) }),
+      });
+      const out = await res.json();
+      if (!out.ok) throw new Error(out.error || 'the sheet refused the leads');
+      await withLeads(() => {
+        (out.saved || []).forEach(id => { const l = leads.find(x => x['Lead ID'] === id); if (l) l._sv = sent.get(id); });
+        return saveLeads();
+      });
+      lsSet(SYNC_KEY, stamp());
+      lastSyncError = '';
+    }
+  } catch (err) {
+    lastSyncError = !navigator.onLine ? '' : err instanceof TypeError ? "can't reach the sheet" : (err.message || "can't reach the sheet");
+  } finally {
+    syncing = false;
+    renderSync();
+  }
+}
+function renderSync() {
+  const box = $('syncInfo'); if (!box) return;
+  if (!CFG.sheetUrl) { box.className = 'sync-info'; box.textContent = 'Google Sheet: not connected. Use Export Excel to save leads.'; return; }
+  const waiting = pendingLeads().length, last = lsGet(SYNC_KEY);
+  let cls = 'ok', msg;
+  if (!waiting) msg = `Google Sheet: all ${leads.length} lead${leads.length === 1 ? '' : 's'} saved${last ? ` (last sync ${last.slice(11, 16)})` : ''}.`;
+  else if (!navigator.onLine) { cls = 'wait'; msg = `Google Sheet: ${waiting} waiting for internet. They'll send automatically.`; }
+  else if (lastSyncError) { cls = 'err'; msg = `Google Sheet: ${waiting} not sent yet (${lastSyncError}). Retrying.`; }
+  else { cls = 'wait'; msg = `Google Sheet: sending ${waiting}...`; }
+  box.className = 'sync-info ' + cls; box.textContent = msg;
+  $('openSheet').classList.toggle('hidden', !CFG.sheetViewUrl);
+}
+window.addEventListener('online', syncNow);
+window.addEventListener('offline', renderSync);
+setInterval(syncNow, 60000);
+$('syncBtn').onclick = syncNow;
+$('openSheet').onclick = () => window.open(CFG.sheetViewUrl, '_blank');
 
 // ---------- Offline support ----------
 applyBrand();
 showLogin('start');
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
-loadLeads();
+loadLeads().then(syncNow);
