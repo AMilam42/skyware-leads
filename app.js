@@ -1,8 +1,8 @@
 const CFG = window.SKY_CONFIG;
 const KEY = 'skyware_leads_v1', EVENT_KEY = 'skyware_event', EXPORT_KEY = 'skyware_last_export';
-const HEADERS = ['Lead ID', 'Submission Timestamp', 'Event Name', ...CFG.fields.map(f => f.label),
+const HEADERS = ['Lead ID', 'Submission Timestamp', 'Event Name', 'Collected By', ...CFG.fields.map(f => f.label),
   'Possible Duplicate', 'Follow Up Status', 'Assigned To', 'Notes'];
-const WIDTHS = { 'Lead ID': 14, 'Submission Timestamp': 21, 'Event Name': 22, 'Email': 32,
+const WIDTHS = { 'Collected By': 16, 'Lead ID': 14, 'Submission Timestamp': 21, 'Event Name': 22, 'Email': 32,
   'Possible Duplicate': 40, 'Follow Up Status': 16, 'Assigned To': 16, 'Notes': 40 };
 const emailRe = /^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/;
 const $ = id => document.getElementById(id);
@@ -50,7 +50,10 @@ function applyBrand() {
   $('headline').textContent = b.headline;
   $('footContact').innerHTML = b.footer;
   const prop = $('property_name'); if (prop) prop.placeholder = b.propertyPlaceholder;
-  document.querySelectorAll('[data-brand-pick]').forEach(btn => btn.classList.toggle('active', btn.dataset.brandPick === key));
+  document.querySelectorAll('[data-brand-pick]').forEach(btn => {
+    const on = btn.dataset.brandPick === key;
+    btn.classList.toggle('active', on); btn.setAttribute('aria-pressed', on);
+  });
 }
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
 
@@ -125,7 +128,7 @@ form.addEventListener('submit', async e => {
   inputs.forEach(i => { const m = check(i); show(i, m); if (m && !first) first = i; });
   if (first) { first.focus(); return; }
   $('submitBtn').disabled = true;
-  const lead = { 'Lead ID': newId(), 'Submission Timestamp': stamp(), 'Event Name': eventName() };
+  const lead = { 'Lead ID': newId(), 'Submission Timestamp': stamp(), 'Event Name': eventName(), 'Collected By': lsGet(WHO_KEY) || '' };
   CFG.fields.forEach(f => {
     const i = $(f.key);
     lead[f.label] = f.type === 'phone' ? formatPhone(i.value.trim()) : i.value.trim();
@@ -147,7 +150,12 @@ form.addEventListener('submit', async e => {
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function renderStaff() {
   $('count').textContent = leads.length;
-  $('eventInput').value = eventName();
+  $('whoAmI').textContent = lsGet(WHO_KEY) || '';
+  $('eventCurrent').textContent = eventName();
+  $('eventInput').value = '';
+  $('recentEvents').innerHTML = recentEvents().filter(e => e !== eventName())
+    .map(e => `<button type="button" class="chip" data-event="${esc(e)}">${esc(e)}</button>`).join('');
+  $('recentEvents').querySelectorAll('[data-event]').forEach(b => b.onclick = () => setEvent(b.dataset.event));
   $('thead').innerHTML = `<tr>${HEADERS.map(h => `<th>${esc(h)}</th>`).join('')}</tr>`;
   $('rows').innerHTML = [...leads].reverse().map(l =>
     `<tr class="${l['Possible Duplicate'] ? 'dup' : ''}">${HEADERS.map(h => `<td>${esc(l[h])}</td>`).join('')}</tr>`).join('');
@@ -157,26 +165,64 @@ function renderStaff() {
     ? `Last export: ${last.at} (${last.count} leads).` + (notExported > 0 ? ` ${notExported} new since then.` : ' Everything is exported.')
     : (leads.length ? 'Not exported yet. Export at the end of each day.' : '');
 }
-$('staffLink').onclick = async () => {
-  await loadLeads(); renderStaff();
-  document.querySelector('main.card').classList.add('hidden');
-  $('staffView').classList.remove('hidden');
-  document.body.classList.add('admin');
+// ---------- Staff sign-in (checked on the device; keeps visitors out of the Staff screen) ----------
+const WHO_KEY = 'skyware_staff_user', RECENT_KEY = 'skyware_recent_events';
+const formCard = document.querySelector('main.card:not(#loginView)');
+function showOnly(view) {
+  [formCard, $('loginView'), $('staffView')].forEach(v => v.classList.toggle('hidden', v !== view));
+  document.body.classList.toggle('admin', view === $('staffView'));
   window.scrollTo(0, 0);
+}
+async function sha256(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+$('staffLink').onclick = () => {
+  $('loginForm').reset(); $('loginErr').textContent = '';
+  $('loginView').querySelector('.field:last-of-type').classList.remove('invalid');
+  showOnly($('loginView'));
+  $('loginUser').focus();
 };
-$('backBtn').onclick = () => {
-  $('staffView').classList.add('hidden');
-  document.querySelector('main.card').classList.remove('hidden');
-  document.body.classList.remove('admin');
-  resetForm();
-};
+$('loginCancel').onclick = () => { showOnly(formCard); resetForm(); };
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const user = $('loginUser').value.trim().toLowerCase(), pass = $('loginPass').value;
+  const hash = await sha256(`${user}:${pass}`);
+  const ok = (CFG.staffLogins || []).some(l => l.username.toLowerCase() === user && l.passwordHash === hash);
+  if (!ok) {
+    $('loginErr').textContent = 'That username and password don\'t match. Please try again.';
+    $('loginPass').closest('.field').classList.add('invalid');
+    $('loginPass').value = ''; $('loginPass').focus();
+    return;
+  }
+  lsSet(WHO_KEY, user);
+  document.activeElement.blur();
+  await loadLeads(); renderStaff();
+  showOnly($('staffView'));
+});
+$('backBtn').onclick = () => { showOnly(formCard); resetForm(); };
+
+// Brand tiles
+$('brandTiles').innerHTML = Object.entries(CFG.brands).map(([key, b]) => `
+  <button type="button" class="brand-tile" data-brand-pick="${key}" aria-pressed="false">
+    <span class="tile-check" aria-hidden="true">&#10003;</span>
+    <span class="tile-logo"><img src="${b.logo}" alt=""></span>
+    <span class="tile-name">${b.name}</span>
+    <span class="tile-blurb">${b.blurb}</span>
+  </button>`).join('');
 document.querySelectorAll('[data-brand-pick]').forEach(btn => btn.onclick = () => { lsSet(BRAND_KEY, btn.dataset.brandPick); applyBrand(); });
-$('saveEvent').onclick = () => {
-  const v = $('eventInput').value.trim();
-  if (!v) return;
+
+// Event name, with the last few events as one-tap chips
+function recentEvents() { try { return JSON.parse(lsGet(RECENT_KEY) || '[]'); } catch { return []; } }
+function setEvent(v) {
+  v = v.trim(); if (!v) return;
   lsSet(EVENT_KEY, v);
-  $('eventSaved').textContent = `Saved. New leads will be tagged "${v}".`;
-};
+  lsSet(RECENT_KEY, JSON.stringify([v, ...recentEvents().filter(e => e !== v)].slice(0, 5)));
+  renderStaff();
+  const cur = $('eventCurrent'); cur.classList.remove('flash'); void cur.offsetWidth; cur.classList.add('flash');
+}
+$('saveEvent').onclick = () => setEvent($('eventInput').value);
+$('eventInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); setEvent($('eventInput').value); } });
 
 function exportName() {
   const d = new Date();

@@ -39,27 +39,48 @@
   </div>
 </main>
 
+<main id="loginView" class="card login hidden">
+  <img class="logo brand-logo" src="logo.png" alt="Skyware">
+  <h1>Staff sign in</h1>
+  <div class="rule"></div>
+  <form id="loginForm" novalidate autocomplete="off">
+    <div class="field">
+      <label for="loginUser">Username</label>
+      <input id="loginUser" type="text" autocapitalize="off" autocorrect="off" spellcheck="false">
+    </div>
+    <div class="field">
+      <label for="loginPass">Password</label>
+      <input id="loginPass" type="password">
+      <div class="err" id="loginErr" aria-live="polite"></div>
+    </div>
+    <button class="btn secondary" type="submit">Sign in</button>
+    <button class="link-btn" id="loginCancel" type="button">Back to form</button>
+  </form>
+</main>
+
 <section id="staffView" class="staff hidden">
   <div class="admin-top">
     <img class="brand-logo" src="logo.png" alt="Skyware">
     <div><div class="big-count" id="count">0</div><div class="muted">leads on this device</div></div>
-    <button class="btn secondary small" id="backBtn" type="button">Back to form</button>
+    <div class="signed-in"><span class="muted">Signed in as</span> <strong id="whoAmI"></strong></div>
+    <button class="btn secondary small" id="backBtn" type="button">Sign out &amp; back to form</button>
   </div>
 
-  <div class="panel">
-    <label for="eventInput">Event name</label>
-    <div class="row">
-      <input id="eventInput" type="text" autocapitalize="words">
-      <button class="btn secondary small" id="saveEvent" type="button">Save event name</button>
+  <div class="setup-grid">
+    <div class="panel event-panel">
+      <div class="panel-kicker">Event</div>
+      <div class="event-current" id="eventCurrent"></div>
+      <div class="muted">Every new lead is tagged with this name.</div>
+      <div class="row event-edit">
+        <input id="eventInput" type="text" autocapitalize="words" placeholder="e.g. OHI 2026">
+        <button class="btn small" id="saveEvent" type="button">Save</button>
+      </div>
+      <div class="chips" id="recentEvents"></div>
     </div>
-    <p class="muted" id="eventSaved"></p>
-  </div>
 
-  <div class="panel">
-    <label>Brand for this show</label>
-    <div class="row brand-pick">
-      <button class="btn secondary small" type="button" data-brand-pick="hotel">Hospitality (hotels)</button>
-      <button class="btn secondary small" type="button" data-brand-pick="rv">RV Solutions (parks)</button>
+    <div class="panel">
+      <div class="panel-kicker">Brand for this show</div>
+      <div class="brand-tiles" id="brandTiles"></div>
     </div>
   </div>
 
