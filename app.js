@@ -247,7 +247,7 @@ $('eventInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.pr
 
 // Leads list (password again, so visitors can't open it from the form)
 $('staffLink').onclick = () => showLogin('unlock');
-$('staffScanLink').onclick = () => showLogin('scan');
+$('staffScanLink').onclick = () => showScan(true);   // no password: scanning only adds leads, it can't show or change any
 async function showLeads() { await loadLeads(); renderStaff(); showOnly($('staffView')); }
 function renderStaff() {
   $('count').textContent = leads.length;
