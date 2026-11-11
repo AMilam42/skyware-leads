@@ -1,9 +1,10 @@
 const CFG = window.SKY_CONFIG;
 const KEY = 'skyware_leads_v1', EVENT_KEY = 'skyware_event', EXPORT_KEY = 'skyware_last_export';
 const HEADERS = ['Lead ID', 'Submission Timestamp', 'Event Name', 'Collected By', ...CFG.fields.map(f => f.label),
-  'Possible Duplicate', 'Follow Up Status', 'Assigned To', 'Notes'];
+  'Possible Duplicate', 'Follow Up Status', 'Assigned To', 'Notes', 'Source', 'Title', 'Website', 'Card Photo'];
 const WIDTHS = { 'Collected By': 16, 'Lead ID': 14, 'Submission Timestamp': 21, 'Event Name': 22, 'Email': 32,
-  'Possible Duplicate': 40, 'Follow Up Status': 16, 'Assigned To': 16, 'Notes': 40 };
+  'Possible Duplicate': 40, 'Follow Up Status': 16, 'Assigned To': 16, 'Notes': 40,
+  'Source': 11, 'Title': 22, 'Website': 26, 'Card Photo': 30 };
 const emailRe = /^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/;
 const $ = id => document.getElementById(id);
 
@@ -139,7 +140,7 @@ form.addEventListener('submit', async e => {
   });
   const ok = await withLeads(() => {
     lead['Possible Duplicate'] = findDupes(lead);
-    lead['Follow Up Status'] = 'New'; lead['Assigned To'] = ''; lead['Notes'] = '';
+    lead['Follow Up Status'] = 'New'; lead['Assigned To'] = ''; lead['Notes'] = ''; lead.Source = 'Kiosk';
     lead._v = 1;   // version: goes up on every edit; the sheet is up to date when _sv (synced version) matches
     leads.push(lead);
     return saveLeads();
@@ -161,7 +162,7 @@ let signedIn = null;        // staff member signed in this session (cleared when
 let loginMode = 'start';    // 'start' = opening the app, 'unlock' = leaving the form for the leads list
 
 function showOnly(view) {
-  [formCard, $('loginView'), $('setupView'), $('staffView')].forEach(v => v.classList.toggle('hidden', v !== view));
+  [formCard, $('loginView'), $('setupView'), $('staffView'), $('scanView')].forEach(v => v.classList.toggle('hidden', v !== view));
   document.body.classList.toggle('admin', view === $('staffView'));
   window.scrollTo(0, 0);
 }
@@ -207,13 +208,21 @@ $('brandTiles').innerHTML = Object.entries(CFG.brands).map(([key, b]) => `
     <span class="tile-name">${b.name}</span>
     <span class="tile-blurb">${b.blurb}</span>
   </button>`).join('');
-let pickedBrand = null;
+let pickedBrand = null, pickedMode = null;
+const MODE_KEY = 'skyware_mode';
+const mode = () => lsGet(MODE_KEY) === 'scan' ? 'scan' : 'kiosk';
+document.querySelectorAll('[data-mode-pick]').forEach(btn => btn.onclick = () => {
+  pickedMode = btn.dataset.modePick; $('modeErr').textContent = '';
+  document.querySelectorAll('[data-mode-pick]').forEach(b => { const on = b === btn; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); });
+  if (pickedMode === 'scan') CardOCR.warmUp();   // download the card reader now, while there's internet
+});
 document.querySelectorAll('[data-brand-pick]').forEach(btn => btn.onclick = () => {
   pickedBrand = btn.dataset.brandPick; lsSet(BRAND_KEY, pickedBrand); applyBrand(); $('setupErr').textContent = '';
 });
 function recentEvents() { try { return JSON.parse(lsGet(RECENT_KEY) || '[]'); } catch { return []; } }
 function showSetup() {
-  pickedBrand = null;
+  pickedBrand = null; pickedMode = null; $('modeErr').textContent = '';
+  document.querySelectorAll('[data-mode-pick]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', false); });
   document.querySelectorAll('[data-brand-pick]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', false); });
   $('setupWho').textContent = signedIn;
   $('eventInput').value = '';
@@ -227,11 +236,13 @@ $('startBtn').onclick = () => {
   const ev = $('eventInput').value.trim();
   if (!pickedBrand) { $('setupErr').textContent = 'Tap the logo to use for this show.'; return; }
   if (!ev) { $('setupErr').textContent = 'Enter the event name.'; $('eventInput').focus(); return; }
-  lsSet(EVENT_KEY, ev);
+  if (!pickedMode) { $('modeErr').textContent = 'Choose booth kiosk or scan cards.'; return; }
+  lsSet(EVENT_KEY, ev); lsSet(MODE_KEY, pickedMode);
   lsSet(RECENT_KEY, JSON.stringify([ev, ...recentEvents().filter(e => e !== ev)].slice(0, 5)));
   document.activeElement.blur();
-  showOnly(formCard); resetForm();
+  goCollect();
 };
+function goCollect() { if (mode() === 'scan') showScan(); else { showOnly(formCard); resetForm(); } }
 $('eventInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('startBtn').click(); } });
 
 // Leads list (password again, so visitors can't open it from the form)
@@ -248,15 +259,23 @@ function renderStaff() {
   $('thead').innerHTML = `<tr><th>Notes</th>${shown.map(h => `<th>${esc(h)}</th>`).join('')}</tr>`;
   $('rows').innerHTML = [...leads].reverse().map(l => `<tr class="${l['Possible Duplicate'] ? 'dup' : ''}">
     <td class="note-cell"><button type="button" class="note-btn${l.Notes ? ' has-note' : ''}" data-note="${esc(l['Lead ID'])}">${l.Notes ? 'Edit note' : '+ Add note'}</button>${l.Notes ? `<div class="note-snippet">${esc(l.Notes)}</div>` : ''}</td>
-    ${shown.map(h => `<td>${esc(l[h])}</td>`).join('')}</tr>`).join('');
+    ${shown.map(h => h === 'Card Photo'
+      ? `<td data-photo-cell="${esc(l['Lead ID'])}">${l['Card Photo'] ? `<a href="${esc(l['Card Photo'])}" target="_blank">Drive</a>` : ''}</td>`
+      : `<td>${esc(l[h])}</td>`).join('')}</tr>`).join('');
   $('rows').querySelectorAll('[data-note]').forEach(b => b.onclick = () => openNote(b.dataset.note));
+  $('backBtn').textContent = mode() === 'scan' ? 'Back to scanning' : 'Back to form';
+  leads.filter(l => l._photo).forEach(async l => {
+    const cell = $('rows').querySelector(`[data-photo-cell="${CSS.escape(l['Lead ID'])}"]`); if (!cell) return;
+    const src = await idbGet('photo:' + l['Lead ID']);
+    if (src) { cell.innerHTML = `<img class="photo-thumb" src="${src}" alt="Card">`; cell.firstChild.onclick = () => { $('photoBig').src = src; $('photoDialog').classList.remove('hidden'); }; }
+  });
   const last = JSON.parse(lsGet(EXPORT_KEY) || 'null');
   const notExported = last ? leads.length - last.count : leads.length;
   $('exportInfo').textContent = last
     ? `Last export: ${last.at} (${last.count} leads).` + (notExported > 0 ? ` ${notExported} new since then.` : ' Everything is exported.')
     : (leads.length ? 'Not exported yet. Export at the end of each day.' : '');
 }
-$('backBtn').onclick = () => { showOnly(formCard); resetForm(); };
+$('backBtn').onclick = goCollect;
 
 // Notes on a lead (saved on the device and exported in the Notes column)
 let noteFor = null;
@@ -281,6 +300,8 @@ $('noteSave').onclick = async () => {
   closeNote(); renderStaff(); syncSoon();
 };
 $('changeSetupBtn').onclick = showSetup;
+$('photoClose').onclick = () => $('photoDialog').classList.add('hidden');
+$('photoDialog').addEventListener('click', e => { if (e.target === $('photoDialog')) $('photoDialog').classList.add('hidden'); });
 $('signOutBtn').onclick = signOut;
 
 function exportName() {
@@ -319,7 +340,7 @@ $('clearBtn').onclick = async () => {
     ? `\n\n${unsynced} lead(s) are NOT in the Google Sheet or an Excel export yet.` : '';
   const typed = prompt(`This permanently removes all ${leads.length} leads from this device.${warn}\n\nType CLEAR to confirm.`);
   if (typed !== 'CLEAR') return;
-  await withLeads(() => { leads = []; return saveLeads(); });
+  await withLeads(async () => { for (const l of leads) if (l._photo) await idbSet('photo:' + l['Lead ID'], null); leads = []; return saveLeads(); });
   try { localStorage.removeItem(EXPORT_KEY); } catch {}
   renderStaff();
 };
@@ -336,19 +357,23 @@ async function syncNow() {
   try {
     for (let round = 0; round < 20; round++) {
       await loadLeads();
-      const batch = pendingLeads().slice(0, 50);
+      const pend = pendingLeads();
+      const batch = pend.some(l => l._photo && !l['Card Photo']) ? pend.slice(0, 5) : pend.slice(0, 50);
       if (!batch.length) break;
       const sent = new Map(batch.map(l => [l['Lead ID'], l._v || 1]));
+      const photos = {};
+      for (const l of batch) if (l._photo && !l['Card Photo']) { const p = await idbGet('photo:' + l['Lead ID']); if (p) photos[l['Lead ID']] = p; }
       const res = await fetch(CFG.sheetUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // keeps it a "simple" request Google accepts
         body: JSON.stringify({ secret: CFG.sheetSecret, headers: HEADERS,
-          leads: batch.map(l => Object.fromEntries(HEADERS.map(h => [h, l[h] ?? '']))) }),
+          leads: batch.map(l => Object.fromEntries(HEADERS.map(h => [h, l[h] ?? '']))), photos }),
       });
       const out = await res.json();
       if (!out.ok) throw new Error(out.error || 'the sheet refused the leads');
       await withLeads(() => {
         (out.saved || []).forEach(id => { const l = leads.find(x => x['Lead ID'] === id); if (l) l._sv = sent.get(id); });
+        Object.entries(out.photoUrls || {}).forEach(([id, url]) => { const l = leads.find(x => x['Lead ID'] === id); if (l) l['Card Photo'] = url; });
         return saveLeads();
       });
       lsSet(SYNC_KEY, stamp());
@@ -378,6 +403,99 @@ window.addEventListener('offline', renderSync);
 setInterval(syncNow, 60000);
 $('syncBtn').onclick = syncNow;
 $('openSheet').onclick = () => window.open(CFG.sheetViewUrl, '_blank');
+
+// ---------- Scan business cards (phone) ----------
+const cardInputs = [...$('cardForm').querySelectorAll('input, textarea')];
+let cardPhoto = null, ocrRun = 0, targetField = null;
+function scanCount() {
+  const ev = eventName(), mine = leads.filter(l => l['Event Name'] === ev && l.Source === 'Card scan').length;
+  $('scanCount').textContent = mine ? `${mine} card${mine === 1 ? '' : 's'} scanned at this show` : '';
+}
+async function showScan() {
+  await loadLeads();
+  $('scanEvent').textContent = eventName();
+  resetCard(); scanCount(); showOnly($('scanView'));
+  CardOCR.warmUp();
+}
+function resetCard() {
+  ocrRun++; cardPhoto = null; targetField = null;
+  $('cardForm').reset(); $('cardErr').textContent = '';
+  cardInputs.forEach(i => i.closest('.field').classList.remove('target', 'invalid'));
+  $('scanForm').classList.add('hidden'); $('photoWrap').classList.add('hidden');
+  $('ocrLinesWrap').classList.add('hidden'); $('ocrStatus').textContent = '';
+  $('scanBtnLabel').classList.remove('hidden', 'busy'); $('manualBtn').classList.remove('hidden');
+  $('cardFile').value = '';
+}
+function openCardForm() {
+  $('scanBtnLabel').classList.add('hidden'); $('manualBtn').classList.add('hidden');
+  $('scanForm').classList.remove('hidden');
+}
+$('manualBtn').onclick = () => { openCardForm(); $('c_name').focus(); };
+$('retakeBtn').onclick = () => $('cardFile').click();
+$('cardCancel').onclick = () => { if (!hasCardData() || confirm('Discard this card?')) resetCard(); };
+const hasCardData = () => cardPhoto || cardInputs.some(i => i.value.trim());
+$('cardFile').addEventListener('change', async () => {
+  const file = $('cardFile').files[0]; if (!file) return;
+  const run = ++ocrRun;
+  $('scanBtnLabel').classList.add('busy');
+  let prepared;
+  try { prepared = await CardOCR.prepare(file); }
+  catch (err) { alert('Sorry, ' + err.message + '. Try again.'); resetCard(); return; }
+  cardPhoto = prepared.photo;
+  $('cardPhoto').src = cardPhoto; $('photoWrap').classList.remove('hidden');
+  openCardForm();
+  $('ocrLinesWrap').classList.add('hidden');
+  $('ocrStatus').textContent = 'Reading card...';
+  try {
+    const text = await CardOCR.read(prepared.ocrCanvas, p => { if (run === ocrRun) $('ocrStatus').textContent = `Reading card... ${Math.round(p * 100)}%`; });
+    if (run !== ocrRun) return;
+    const f = CardOCR.parse(text);
+    const set = (id, v) => { if (v && !$(id).value.trim()) $(id).value = v; };
+    set('c_name', f.name); set('c_title', f.title); set('c_company', f.company);
+    set('c_phone', f.phone && formatPhone(f.phone)); set('c_email', f.email); set('c_web', f.website);
+    $('ocrStatus').textContent = f.lines.length ? 'Check the fields below and fix anything the card reader got wrong.' : "Couldn't read text from this photo. Type the details in, or retake it closer and in good light.";
+    $('ocrLines').innerHTML = f.lines.map((l, i) => `<button type="button" class="chip" data-line="${i}">${esc(l)}</button>`).join('');
+    $('ocrLines').querySelectorAll('[data-line]').forEach(b => b.onclick = () => {
+      const t = targetField || cardInputs.find(i => !i.value.trim() && i.id !== 'c_note') || $('c_note');
+      const line = f.lines[+b.dataset.line];
+      t.value = t.tagName === 'TEXTAREA' && t.value ? t.value + '\n' + line : (t.dataset.type === 'phone' ? formatPhone(line) : line);
+    });
+    $('ocrLinesWrap').classList.toggle('hidden', !f.lines.length);
+  } catch (err) {
+    if (run !== ocrRun) return;
+    $('ocrStatus').textContent = navigator.onLine ? "The card reader didn't work this time. Type the details in; the photo is still saved."
+      : "The card reader hasn't downloaded to this phone yet (open the app once with internet). Type the details in; the photo is still saved.";
+  }
+  $('scanBtnLabel').classList.remove('busy');
+});
+cardInputs.forEach(i => i.addEventListener('focus', () => {
+  targetField = i; cardInputs.forEach(x => x.closest('.field').classList.toggle('target', x === i));
+}));
+$('c_phone').addEventListener('blur', () => { $('c_phone').value = formatPhone($('c_phone').value); });
+$('cardForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const v = id => $(id).value.trim();
+  if (!v('c_name') && !v('c_company') && !v('c_email') && !v('c_phone')) { $('cardErr').textContent = 'Add at least a name, company, phone or email.'; return; }
+  if (v('c_email') && !emailRe.test(v('c_email'))) { $('cardErr').textContent = 'That email doesn\'t look right. Check it or clear it.'; $('c_email').focus(); return; }
+  $('cardErr').textContent = ''; $('cardSave').disabled = true;
+  const lead = { 'Lead ID': newId(), 'Submission Timestamp': stamp(), 'Event Name': eventName(), 'Collected By': signedIn || '' };
+  cardInputs.forEach(i => { lead[i.dataset.col] = i.dataset.type === 'phone' ? formatPhone(i.value.trim()) : i.value.trim(); });
+  lead.Source = 'Card scan'; lead['Card Photo'] = '';
+  if (cardPhoto) { await idbSet('photo:' + lead['Lead ID'], cardPhoto); lead._photo = true; }
+  const ok = await withLeads(() => {
+    lead['Possible Duplicate'] = findDupes(lead);
+    lead['Follow Up Status'] = 'New'; lead['Assigned To'] = ''; lead._v = 1;
+    leads.push(lead);
+    return saveLeads();
+  });
+  $('cardSave').disabled = false;
+  syncSoon();
+  if (!ok) alert('Warning: this phone is almost out of storage. Export your leads soon.');
+  document.activeElement.blur();
+  resetCard(); scanCount(); window.scrollTo(0, 0);
+  $('savedToast').classList.remove('hidden'); setTimeout(() => $('savedToast').classList.add('hidden'), 1600);
+});
+$('scanLeadsBtn').onclick = () => { if (hasCardData() && !confirm('Leave this card without saving?')) return; showLeads(); };
 
 // ---------- Offline support ----------
 applyBrand();

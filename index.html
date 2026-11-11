@@ -77,7 +77,67 @@
     <div class="err" id="setupErr" aria-live="polite"></div>
   </div>
 
+  <div class="step">
+    <div class="step-head"><span class="step-num">3</span> How are you collecting?</div>
+    <div class="brand-tiles mode-tiles">
+      <button type="button" class="brand-tile" data-mode-pick="kiosk" aria-pressed="false">
+        <span class="tile-check" aria-hidden="true">&#10003;</span>
+        <span class="tile-icon" aria-hidden="true">&#128203;</span>
+        <span class="tile-name">Booth kiosk</span>
+        <span class="tile-blurb">Visitors type their details on the iPad</span>
+      </button>
+      <button type="button" class="brand-tile" data-mode-pick="scan" aria-pressed="false">
+        <span class="tile-check" aria-hidden="true">&#10003;</span>
+        <span class="tile-icon" aria-hidden="true">&#128247;</span>
+        <span class="tile-name">Scan cards</span>
+        <span class="tile-blurb">Snap business cards on your phone and add a note</span>
+      </button>
+    </div>
+    <div class="err" id="modeErr" aria-live="polite"></div>
+  </div>
+
   <button class="btn" id="startBtn" type="button">Start collecting leads</button>
+</main>
+
+<main id="scanView" class="card scan hidden">
+  <div class="scan-top">
+    <img class="brand-logo scan-logo" src="logo.png" alt="Skyware">
+    <div class="scan-event"><span class="muted">Show</span> <strong id="scanEvent"></strong></div>
+  </div>
+
+  <label class="btn scan-btn" for="cardFile" id="scanBtnLabel">&#128247; Scan business card</label>
+  <input id="cardFile" type="file" accept="image/*" capture="environment" class="visually-hidden">
+  <button class="link-btn" id="manualBtn" type="button">No card? Type it in</button>
+
+  <div id="scanForm" class="hidden">
+    <div class="card-photo-wrap hidden" id="photoWrap">
+      <img id="cardPhoto" alt="Business card photo">
+      <button class="link-btn inline retake" id="retakeBtn" type="button">Retake</button>
+    </div>
+    <p class="ocr-status" id="ocrStatus" aria-live="polite"></p>
+    <div class="ocr-lines hidden" id="ocrLinesWrap">
+      <p class="muted">Tap a field, then tap a line from the card to fill it.</p>
+      <div class="chips" id="ocrLines"></div>
+    </div>
+    <form id="cardForm" novalidate autocomplete="off">
+      <div class="field"><label for="c_name">Name</label><input id="c_name" type="text" autocapitalize="words" data-col="Name"></div>
+      <div class="field"><label for="c_title">Title</label><input id="c_title" type="text" autocapitalize="words" data-col="Title"></div>
+      <div class="field"><label for="c_company">Company / Property</label><input id="c_company" type="text" autocapitalize="words" data-col="Property Name"></div>
+      <div class="field"><label for="c_phone">Phone</label><input id="c_phone" type="tel" inputmode="tel" data-col="Phone Number" data-type="phone"></div>
+      <div class="field"><label for="c_email">Email</label><input id="c_email" type="email" inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false" data-col="Email" data-type="email"></div>
+      <div class="field"><label for="c_web">Website</label><input id="c_web" type="text" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" data-col="Website"></div>
+      <div class="field"><label for="c_note">Quick note</label><textarea id="c_note" rows="3" data-col="Notes" placeholder="e.g. 120 sites, on Campspot, wants a demo in January"></textarea></div>
+      <div class="err" id="cardErr" aria-live="polite"></div>
+      <button class="btn" id="cardSave" type="submit">Save lead</button>
+      <button class="link-btn" id="cardCancel" type="button">Discard</button>
+    </form>
+  </div>
+
+  <div class="toast hidden" id="savedToast">&#10003; Saved</div>
+  <div class="foot">
+    <span id="scanCount"></span>
+    <button id="scanLeadsBtn" class="staff-link" type="button">My leads &amp; export</button>
+  </div>
 </main>
 
 <section id="staffView" class="staff hidden">
@@ -113,6 +173,11 @@
   </div>
 </section>
 
+<div id="photoDialog" class="modal hidden" role="dialog" aria-modal="true" aria-label="Card photo">
+  <div class="modal-card"><img id="photoBig" alt="Business card" class="photo-big">
+    <div class="row modal-actions"><button class="btn secondary small" id="photoClose" type="button">Close</button></div></div>
+</div>
+
 <div id="noteDialog" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="noteTitle">
   <div class="modal-card">
     <h2 id="noteTitle"></h2>
@@ -128,6 +193,8 @@
 
 <script src="config.js"></script>
 <script src="xlsx.js"></script>
+<script src="ocr/tesseract.min.js"></script>
+<script src="card.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

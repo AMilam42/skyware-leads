@@ -8,9 +8,12 @@
  *
  * The app sends batches of leads. Each lead is matched on Lead ID: an existing row is updated
  * (e.g. a note was added later), a new Lead ID is added as a new row.
+ * Business card photos (from "Scan cards" mode) are saved to a Drive folder, linked in the Card Photo column.
+ * After changing this file: Deploy > New deployment, then put the new /exec URL in config.js.
  */
 const SECRET = 'gYcYznlIRiUP5Wk0qaZhKi6T';   // must match sheetSecret in the app's config.js
 const SHEET_NAME = 'Leads';
+const PHOTO_FOLDER = 'Skyware Lead Card Photos';
 
 function doPost(e) {
   const lock = LockService.getScriptLock();
@@ -23,8 +26,13 @@ function doPost(e) {
     const ids = sheet.getLastRow() > 1
       ? sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues().map(r => String(r[0]))
       : [];
-    const saved = [];
+    const saved = [], photoUrls = {}, photos = body.photos || {};
     leads.forEach(lead => {
+      const pid = String(lead['Lead ID']);
+      if (photos[pid] && !lead['Card Photo']) {
+        lead['Card Photo'] = savePhoto(pid, lead, photos[pid]);
+        photoUrls[pid] = lead['Card Photo'];
+      }
       // Leading apostrophe keeps values as text (phone numbers, and anything starting with = + - @).
       const row = headers.map(h => {
         const v = lead[h] == null ? '' : String(lead[h]);
@@ -45,7 +53,7 @@ function doPost(e) {
       }
       saved.push(lead['Lead ID']);
     });
-    return reply({ ok: true, saved: saved });
+    return reply({ ok: true, saved: saved, photoUrls: photoUrls });
   } catch (err) {
     return reply({ ok: false, error: String(err) });
   } finally {
@@ -55,6 +63,15 @@ function doPost(e) {
 
 function doGet() {
   return reply({ ok: true, app: 'Skyware Leads receiver' });
+}
+
+function savePhoto(id, lead, dataUrl) {
+  const it = DriveApp.getFoldersByName(PHOTO_FOLDER);
+  const folder = it.hasNext() ? it.next() : DriveApp.createFolder(PHOTO_FOLDER);
+  const bytes = Utilities.base64Decode(String(dataUrl).split(',')[1]);
+  const name = [lead['Event Name'], lead['Name'] || lead['Property Name'], id].filter(String).join(' - ').replace(/[\\/:*?"<>|]/g, '');
+  const file = folder.createFile(Utilities.newBlob(bytes, 'image/jpeg', name + '.jpg'));
+  return file.getUrl();
 }
 
 function getSheet(headers) {
@@ -71,6 +88,12 @@ function getSheet(headers) {
     sheet.getRange(1, 1, 1, headers.length).createFilter();
     sheet.getRange('A:Z').setNumberFormat('@');   // plain text, so phone numbers aren't turned into numbers
     sheet.setColumnWidths(1, headers.length, 160);
+  } else {
+    // New columns added to the app later (e.g. Source, Title, Website, Card Photo) get added to the header row.
+    const have = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(String);
+    headers.forEach((h, i) => {
+      if (have[i] !== h) sheet.getRange(1, i + 1).setValue(h).setFontWeight('bold').setFontColor('#FFFFFF').setBackground('#175B86');
+    });
   }
   return sheet;
 }
