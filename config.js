@@ -6,7 +6,7 @@ window.SKY_CONFIG = {
   // Google Sheet: leads are sent here automatically whenever the iPad is online.
   // sheetUrl = the Apps Script web app address (ends in /exec); leave "" to turn syncing off.
   // sheetSecret must match SECRET in google-sheet-script.gs. sheetViewUrl = the sheet's own link (for the "Open sheet" button).
-  sheetUrl: ""   /* TEST BUILD: sync off so test leads never reach the live sheet */,
+  sheetUrl: "https://script.google.com/macros/s/AKfycbzWvbL9xkY8ldrvtrPN6AjPWSyHqVnkbp5zQRvL0aLhrtR4DFZEtVEfPnKjq7L_q-5KAA/exec",   // TEST BUILD: points at the "Skyware Leads TEST" copy, not the live sheet
   sheetSecret: "gYcYznlIRiUP5Wk0qaZhKi6T",
   sheetViewUrl: "",
 
