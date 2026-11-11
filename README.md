@@ -16,9 +16,9 @@ To keep visitors in the app, turn on **Guided Access** (Settings → Accessibili
 - Bad emails and phone numbers are caught with a clear message.
 - A thank-you screen shows and the form clears after 8 seconds.
 
-## Scan cards mode (phones)
+## Scanning business cards
 
-When setting up a show, step 3 asks **Booth kiosk** (visitors type on the iPad, as before) or **Scan cards**. In Scan cards mode a sales rep taps **Scan business card**, takes a photo, and the phone reads the card (name, title, company, phone, email, website). The rep checks the fields, adds a quick note, and taps **Save lead**. Lines the reader found show as chips: tap a field, then a chip, to fix a field fast. **No card? Type it in** skips the photo.
+At the bottom of the booth form, **Staff: scan a card** (no password) opens the card scanner. Take a photo of the card; the device reads it (name, title, company, phone, email, website). Check the fields, add a quick note, tap **Save lead**, then scan the next card or tap **Back to booth form**. Lines the reader found show as chips: tap a field, then a chip, to fix a field fast. **No card? Type it in** skips the photo. Reps can use it on their phones too: set up the show, then tap the link.
 
 The card reader runs on the phone (Tesseract, files in `ocr/`), so it works with no signal once the app has been opened in Scan cards mode with internet. Photos are kept on the phone; when the Google Sheet script is updated (see `google-sheet-script.gs`) they're saved to a Drive folder *Skyware Lead Card Photos* and linked in the **Card Photo** column. New columns: Source (Kiosk / Card scan), Title, Website, Card Photo.
 

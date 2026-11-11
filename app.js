@@ -196,7 +196,7 @@ $('loginForm').addEventListener('submit', async e => {
   }
   signedIn = user; lsSet(WHO_KEY, user);
   document.activeElement.blur();
-  if (loginMode === 'start') showSetup(); else if (loginMode === 'scan') showScan(true); else showLeads();
+  if (loginMode === 'start') showSetup(); else showLeads();
 });
 function signOut() { signedIn = null; showLogin('start'); }
 
@@ -208,21 +208,13 @@ $('brandTiles').innerHTML = Object.entries(CFG.brands).map(([key, b]) => `
     <span class="tile-name">${b.name}</span>
     <span class="tile-blurb">${b.blurb}</span>
   </button>`).join('');
-let pickedBrand = null, pickedMode = null;
-const MODE_KEY = 'skyware_mode';
-const mode = () => lsGet(MODE_KEY) === 'scan' ? 'scan' : 'kiosk';
-document.querySelectorAll('[data-mode-pick]').forEach(btn => btn.onclick = () => {
-  pickedMode = btn.dataset.modePick; $('modeErr').textContent = '';
-  document.querySelectorAll('[data-mode-pick]').forEach(b => { const on = b === btn; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); });
-  if (pickedMode === 'scan') CardOCR.warmUp();   // download the card reader now, while there's internet
-});
+let pickedBrand = null;
 document.querySelectorAll('[data-brand-pick]').forEach(btn => btn.onclick = () => {
   pickedBrand = btn.dataset.brandPick; lsSet(BRAND_KEY, pickedBrand); applyBrand(); $('setupErr').textContent = '';
 });
 function recentEvents() { try { return JSON.parse(lsGet(RECENT_KEY) || '[]'); } catch { return []; } }
 function showSetup() {
-  pickedBrand = null; pickedMode = null; $('modeErr').textContent = '';
-  document.querySelectorAll('[data-mode-pick]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', false); });
+  pickedBrand = null;
   document.querySelectorAll('[data-brand-pick]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', false); });
   $('setupWho').textContent = signedIn;
   $('eventInput').value = '';
@@ -236,18 +228,17 @@ $('startBtn').onclick = () => {
   const ev = $('eventInput').value.trim();
   if (!pickedBrand) { $('setupErr').textContent = 'Tap the logo to use for this show.'; return; }
   if (!ev) { $('setupErr').textContent = 'Enter the event name.'; $('eventInput').focus(); return; }
-  if (!pickedMode) { $('modeErr').textContent = 'Choose Booth iPad or Quick scan.'; return; }
-  lsSet(EVENT_KEY, ev); lsSet(MODE_KEY, pickedMode);
+  lsSet(EVENT_KEY, ev);
   lsSet(RECENT_KEY, JSON.stringify([ev, ...recentEvents().filter(e => e !== ev)].slice(0, 5)));
   document.activeElement.blur();
   goCollect();
 };
-function goCollect() { if (mode() === 'scan') showScan(); else { showOnly(formCard); resetForm(); } }
+function goCollect() { showOnly(formCard); resetForm(); CardOCR.warmUp(); }   // warm-up downloads the card reader while online
 $('eventInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('startBtn').click(); } });
 
 // Leads list (password again, so visitors can't open it from the form)
 $('staffLink').onclick = () => showLogin('unlock');
-$('staffScanLink').onclick = () => showScan(true);   // no password: scanning only adds leads, it can't show or change any
+$('staffScanLink').onclick = () => showScan();   // no password: scanning only adds leads, it can't show or change any
 async function showLeads() { await loadLeads(); renderStaff(); showOnly($('staffView')); }
 function renderStaff() {
   $('count').textContent = leads.length;
@@ -264,7 +255,6 @@ function renderStaff() {
       ? `<td data-photo-cell="${esc(l['Lead ID'])}">${l['Card Photo'] ? `<a href="${esc(l['Card Photo'])}" target="_blank">Drive</a>` : ''}</td>`
       : `<td>${esc(l[h])}</td>`).join('')}</tr>`).join('');
   $('rows').querySelectorAll('[data-note]').forEach(b => b.onclick = () => openNote(b.dataset.note));
-  $('backBtn').textContent = mode() === 'scan' ? 'Back to scanning' : 'Back to form';
   leads.filter(l => l._photo).forEach(async l => {
     const cell = $('rows').querySelector(`[data-photo-cell="${CSS.escape(l['Lead ID'])}"]`); if (!cell) return;
     const src = await idbGet('photo:' + l['Lead ID']);
@@ -412,11 +402,7 @@ function scanCount() {
   const ev = eventName(), mine = leads.filter(l => l['Event Name'] === ev && l.Source === 'Card scan').length;
   $('scanCount').textContent = mine ? `${mine} card${mine === 1 ? '' : 's'} scanned at this show` : '';
 }
-let scanFromKiosk = false;   // true when a staff member jumped in from the booth form's footer
-async function showScan(fromKiosk = false) {
-  scanFromKiosk = fromKiosk;
-  $('scanBackBtn').classList.toggle('hidden', !fromKiosk);
-  $('scanLeadsBtn').classList.toggle('hidden', fromKiosk);
+async function showScan() {
   await loadLeads();
   $('scanEvent').textContent = eventName();
   resetCard(); scanCount(); showOnly($('scanView'));
@@ -501,7 +487,6 @@ $('cardForm').addEventListener('submit', async e => {
   $('savedToast').classList.remove('hidden'); setTimeout(() => $('savedToast').classList.add('hidden'), 1600);
 });
 $('scanBackBtn').onclick = () => { if (hasCardData() && !confirm('Leave this card without saving?')) return; showOnly(formCard); resetForm(); };
-$('scanLeadsBtn').onclick = () => { if (hasCardData() && !confirm('Leave this card without saving?')) return; showLeads(); };
 
 // ---------- Offline support ----------
 applyBrand();
