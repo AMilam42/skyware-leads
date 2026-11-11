@@ -1,5 +1,5 @@
 // Caches the app so it opens with no internet. Bump VERSION after changing any file.
-const VERSION = 'skyware-leads-test-v13';
+const VERSION = 'skyware-leads-test-v15';
 const OCR_CACHE = 'skyware-ocr-5.1.1';   // card reader files (~7 MB); kept across app updates
 const FILES = ['./', 'index.html', 'app.js', 'card.js', 'config.js', 'xlsx.js', 'brand.css', 'app.css',
   'logo.png', 'logo-rv.png', 'icon-180.png', 'icon-512.png', 'manifest.webmanifest',

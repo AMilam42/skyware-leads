@@ -236,7 +236,7 @@ $('startBtn').onclick = () => {
   const ev = $('eventInput').value.trim();
   if (!pickedBrand) { $('setupErr').textContent = 'Tap the logo to use for this show.'; return; }
   if (!ev) { $('setupErr').textContent = 'Enter the event name.'; $('eventInput').focus(); return; }
-  if (!pickedMode) { $('modeErr').textContent = 'Choose booth kiosk or scan cards.'; return; }
+  if (!pickedMode) { $('modeErr').textContent = 'Choose Booth iPad or Quick scan.'; return; }
   lsSet(EVENT_KEY, ev); lsSet(MODE_KEY, pickedMode);
   lsSet(RECENT_KEY, JSON.stringify([ev, ...recentEvents().filter(e => e !== ev)].slice(0, 5)));
   document.activeElement.blur();
