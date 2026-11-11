@@ -148,11 +148,14 @@ form.addEventListener('submit', async e => {
   syncSoon();
   if (!ok) alert('Warning: this device is almost out of storage. Please ask a Skyware team member to export the leads.');
   document.activeElement.blur();
+  showThanks();
+});
+function showThanks() {
   $('formView').classList.add('hidden');
   $('thanksView').classList.remove('hidden');
   let s = CFG.resetSeconds; $('secs').textContent = s;
   timer = setInterval(() => { s--; $('secs').textContent = s; if (s <= 0) resetForm(); }, 1000);
-});
+}
 
 // ---------- Screens: sign in -> set up the show -> form -> (password) -> leads ----------
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -208,21 +211,13 @@ $('brandTiles').innerHTML = Object.entries(CFG.brands).map(([key, b]) => `
     <span class="tile-name">${b.name}</span>
     <span class="tile-blurb">${b.blurb}</span>
   </button>`).join('');
-let pickedBrand = null, pickedMode = null;
-const MODE_KEY = 'skyware_mode';
-const mode = () => lsGet(MODE_KEY) === 'scan' ? 'scan' : 'kiosk';
-document.querySelectorAll('[data-mode-pick]').forEach(btn => btn.onclick = () => {
-  pickedMode = btn.dataset.modePick; $('modeErr').textContent = '';
-  document.querySelectorAll('[data-mode-pick]').forEach(b => { const on = b === btn; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); });
-  if (pickedMode === 'scan') CardOCR.warmUp();   // download the card reader now, while there's internet
-});
+let pickedBrand = null;
 document.querySelectorAll('[data-brand-pick]').forEach(btn => btn.onclick = () => {
   pickedBrand = btn.dataset.brandPick; lsSet(BRAND_KEY, pickedBrand); applyBrand(); $('setupErr').textContent = '';
 });
 function recentEvents() { try { return JSON.parse(lsGet(RECENT_KEY) || '[]'); } catch { return []; } }
 function showSetup() {
-  pickedBrand = null; pickedMode = null; $('modeErr').textContent = '';
-  document.querySelectorAll('[data-mode-pick]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', false); });
+  pickedBrand = null;
   document.querySelectorAll('[data-brand-pick]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', false); });
   $('setupWho').textContent = signedIn;
   $('eventInput').value = '';
@@ -236,13 +231,12 @@ $('startBtn').onclick = () => {
   const ev = $('eventInput').value.trim();
   if (!pickedBrand) { $('setupErr').textContent = 'Tap the logo to use for this show.'; return; }
   if (!ev) { $('setupErr').textContent = 'Enter the event name.'; $('eventInput').focus(); return; }
-  if (!pickedMode) { $('modeErr').textContent = 'Choose booth kiosk or scan cards.'; return; }
-  lsSet(EVENT_KEY, ev); lsSet(MODE_KEY, pickedMode);
+  lsSet(EVENT_KEY, ev);
   lsSet(RECENT_KEY, JSON.stringify([ev, ...recentEvents().filter(e => e !== ev)].slice(0, 5)));
   document.activeElement.blur();
   goCollect();
 };
-function goCollect() { if (mode() === 'scan') showScan(); else { showOnly(formCard); resetForm(); } }
+function goCollect() { showOnly(formCard); resetForm(); CardOCR.warmUp(); }
 $('eventInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('startBtn').click(); } });
 
 // Leads list (password again, so visitors can't open it from the form)
@@ -263,7 +257,6 @@ function renderStaff() {
       ? `<td data-photo-cell="${esc(l['Lead ID'])}">${l['Card Photo'] ? `<a href="${esc(l['Card Photo'])}" target="_blank">Drive</a>` : ''}</td>`
       : `<td>${esc(l[h])}</td>`).join('')}</tr>`).join('');
   $('rows').querySelectorAll('[data-note]').forEach(b => b.onclick = () => openNote(b.dataset.note));
-  $('backBtn').textContent = mode() === 'scan' ? 'Back to scanning' : 'Back to form';
   leads.filter(l => l._photo).forEach(async l => {
     const cell = $('rows').querySelector(`[data-photo-cell="${CSS.escape(l['Lead ID'])}"]`); if (!cell) return;
     const src = await idbGet('photo:' + l['Lead ID']);
@@ -432,7 +425,7 @@ function openCardForm() {
 }
 $('manualBtn').onclick = () => { openCardForm(); $('c_name').focus(); };
 $('retakeBtn').onclick = () => $('cardFile').click();
-$('cardCancel').onclick = () => { if (!hasCardData() || confirm('Discard this card?')) resetCard(); };
+$('cardCancel').onclick = () => { if (!hasCardData() || confirm('Discard this card?')) goCollect(); };
 const hasCardData = () => cardPhoto || cardInputs.some(i => i.value.trim());
 $('cardFile').addEventListener('change', async () => {
   const file = $('cardFile').files[0]; if (!file) return;
@@ -492,10 +485,10 @@ $('cardForm').addEventListener('submit', async e => {
   syncSoon();
   if (!ok) alert('Warning: this phone is almost out of storage. Export your leads soon.');
   document.activeElement.blur();
-  resetCard(); scanCount(); window.scrollTo(0, 0);
-  $('savedToast').classList.remove('hidden'); setTimeout(() => $('savedToast').classList.add('hidden'), 1600);
+  resetCard(); goCollect(); showThanks();
 });
-$('scanLeadsBtn').onclick = () => { if (hasCardData() && !confirm('Leave this card without saving?')) return; showLeads(); };
+$('scanLeadsBtn').onclick = () => { if (hasCardData() && !confirm('Leave this card without saving?')) return; goCollect(); };
+$('kioskScanBtn').onclick = () => { showScan().then(() => $('cardFile').click()); };
 
 // ---------- Offline support ----------
 applyBrand();

@@ -22,6 +22,8 @@
     <h1 id="headline">Let's talk about your property</h1>
     <div class="rule"></div>
     <p class="sub">Leave your details and our team will follow up after the show.</p>
+    <button class="btn secondary scan-entry" id="kioskScanBtn" type="button">&#128247; Have a business card? Scan it</button>
+    <div class="or-rule"><span>or type your details</span></div>
     <form id="leadForm" novalidate autocomplete="off"></form>
   </section>
 
@@ -77,24 +79,6 @@
     <div class="err" id="setupErr" aria-live="polite"></div>
   </div>
 
-  <div class="step">
-    <div class="step-head"><span class="step-num">3</span> How are you collecting?</div>
-    <div class="brand-tiles mode-tiles">
-      <button type="button" class="brand-tile" data-mode-pick="kiosk" aria-pressed="false">
-        <span class="tile-check" aria-hidden="true">&#10003;</span>
-        <span class="tile-icon" aria-hidden="true">&#128203;</span>
-        <span class="tile-name">Booth kiosk</span>
-        <span class="tile-blurb">Visitors type their details on the iPad</span>
-      </button>
-      <button type="button" class="brand-tile" data-mode-pick="scan" aria-pressed="false">
-        <span class="tile-check" aria-hidden="true">&#10003;</span>
-        <span class="tile-icon" aria-hidden="true">&#128247;</span>
-        <span class="tile-name">Scan cards</span>
-        <span class="tile-blurb">Snap business cards on your phone and add a note</span>
-      </button>
-    </div>
-    <div class="err" id="modeErr" aria-live="polite"></div>
-  </div>
 
   <button class="btn" id="startBtn" type="button">Start collecting leads</button>
 </main>
@@ -136,7 +120,7 @@
   <div class="toast hidden" id="savedToast">&#10003; Saved</div>
   <div class="foot">
     <span id="scanCount"></span>
-    <button id="scanLeadsBtn" class="staff-link" type="button">My leads &amp; export</button>
+    <button id="scanLeadsBtn" class="staff-link" type="button">Back to form</button>
   </div>
 </main>
 
