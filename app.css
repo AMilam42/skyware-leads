@@ -165,3 +165,4 @@ body { padding-top: max(24px, env(safe-area-inset-top)); padding-bottom: max(24p
 .photo-big { width: 100%; border-radius: var(--radius-card); }
 @media (max-width: 600px) { .card.scan { padding: 18px 16px; } body:has(#scanView:not(.hidden)) { padding-left: 8px; padding-right: 8px; align-items: flex-start; } }
 .scan .hidden, .scan-btn.hidden, .scan .link-btn.hidden { display: none; }
+.staff-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 0 4px; margin-top: 10px; } .staff-links .staff-link { margin: 0; }

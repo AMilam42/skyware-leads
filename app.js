@@ -176,11 +176,11 @@ function showLogin(mode) {
   $('loginForm').reset(); $('loginErr').textContent = '';
   $('loginPass').closest('.field').classList.remove('invalid');
   $('loginTitle').textContent = mode === 'start' ? 'Staff sign in' : 'Staff only';
-  $('loginSub').textContent = mode === 'start' ? 'Sign in to set up the booth.' : 'Enter your password to see the leads.';
+  $('loginSub').textContent = mode === 'start' ? 'Sign in to set up the booth.' : mode === 'scan' ? 'Enter your password to scan a business card.' : 'Enter your password to see the leads.';
   $('loginCancel').classList.toggle('hidden', mode === 'start');
-  if (mode === 'unlock' && signedIn) $('loginUser').value = signedIn;
+  if (mode !== 'start' && signedIn) $('loginUser').value = signedIn;
   showOnly($('loginView'));
-  (mode === 'unlock' && signedIn ? $('loginPass') : $('loginUser')).focus();
+  (mode !== 'start' && signedIn ? $('loginPass') : $('loginUser')).focus();
 }
 $('loginCancel').onclick = () => { showOnly(formCard); resetForm(); };
 $('loginForm').addEventListener('submit', async e => {
@@ -196,7 +196,7 @@ $('loginForm').addEventListener('submit', async e => {
   }
   signedIn = user; lsSet(WHO_KEY, user);
   document.activeElement.blur();
-  if (loginMode === 'start') showSetup(); else showLeads();
+  if (loginMode === 'start') showSetup(); else if (loginMode === 'scan') showScan(true); else showLeads();
 });
 function signOut() { signedIn = null; showLogin('start'); }
 
@@ -247,6 +247,7 @@ $('eventInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.pr
 
 // Leads list (password again, so visitors can't open it from the form)
 $('staffLink').onclick = () => showLogin('unlock');
+$('staffScanLink').onclick = () => showLogin('scan');
 async function showLeads() { await loadLeads(); renderStaff(); showOnly($('staffView')); }
 function renderStaff() {
   $('count').textContent = leads.length;
@@ -411,7 +412,11 @@ function scanCount() {
   const ev = eventName(), mine = leads.filter(l => l['Event Name'] === ev && l.Source === 'Card scan').length;
   $('scanCount').textContent = mine ? `${mine} card${mine === 1 ? '' : 's'} scanned at this show` : '';
 }
-async function showScan() {
+let scanFromKiosk = false;   // true when a staff member jumped in from the booth form's footer
+async function showScan(fromKiosk = false) {
+  scanFromKiosk = fromKiosk;
+  $('scanBackBtn').classList.toggle('hidden', !fromKiosk);
+  $('scanLeadsBtn').classList.toggle('hidden', fromKiosk);
   await loadLeads();
   $('scanEvent').textContent = eventName();
   resetCard(); scanCount(); showOnly($('scanView'));
@@ -495,6 +500,7 @@ $('cardForm').addEventListener('submit', async e => {
   resetCard(); scanCount(); window.scrollTo(0, 0);
   $('savedToast').classList.remove('hidden'); setTimeout(() => $('savedToast').classList.add('hidden'), 1600);
 });
+$('scanBackBtn').onclick = () => { if (hasCardData() && !confirm('Leave this card without saving?')) return; showOnly(formCard); resetForm(); };
 $('scanLeadsBtn').onclick = () => { if (hasCardData() && !confirm('Leave this card without saving?')) return; showLeads(); };
 
 // ---------- Offline support ----------
