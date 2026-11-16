@@ -6,9 +6,9 @@ window.SKY_CONFIG = {
   // Google Sheet: leads are sent here automatically whenever the iPad is online.
   // sheetUrl = the Apps Script web app address (ends in /exec); leave "" to turn syncing off.
   // sheetSecret must match SECRET in google-sheet-script.gs. sheetViewUrl = the sheet's own link (for the "Open sheet" button).
-  sheetUrl: "https://script.google.com/macros/s/AKfycbzWvbL9xkY8ldrvtrPN6AjPWSyHqVnkbp5zQRvL0aLhrtR4DFZEtVEfPnKjq7L_q-5KAA/exec",   // TEST BUILD: points at the "Skyware Leads TEST" copy, not the live sheet
+  sheetUrl: "https://script.google.com/macros/s/AKfycbzyp8rsNrpMv-KjrwNcSNgB_OZ3JxLA1F4euqmn9IMqRrRUt14uAqGKW_4AcA2mY2QGxA/exec",
   sheetSecret: "gYcYznlIRiUP5Wk0qaZhKi6T",
-  sheetViewUrl: "",
+  sheetViewUrl: "https://docs.google.com/spreadsheets/d/1V7qKO_ZOXc5o_fNuFnOQ3J7xPGBLfVObhju-8D68r28/edit",
 
   // Staff logins for the Staff screen. Passwords are stored as fingerprints, not plain text.
   // To add or change one, run:  node make-login.js <username> <password>  and paste the line it prints here.
